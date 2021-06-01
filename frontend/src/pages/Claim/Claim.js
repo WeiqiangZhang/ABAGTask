@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./Claim.module.css";
 import { useWeb3 } from "../../contexts/web3Provider";
 import { getProof } from "../../utils/merkleTree";
@@ -31,8 +31,12 @@ const Claim = () => {
   useEffect(() => {
     const getDistributor = async () => {
       if (currentAccountAddress && web3.signer) {
-        let newState = [...state];
-        users.map(async (user, i) => {
+        const promises = users.map(async (user, i) => {
+          let newState = {
+            proof: [],
+            amount: "0",
+            loadingMessage: "",
+          };
           const hasSpent = await spent(
             user[0].split(' ')[0],
             web3.signer
@@ -42,26 +46,28 @@ const Claim = () => {
               [user1[0], user2[0], user3[0]],
               user[0]
             );
-            newState[i] = {
+            newState = {
               proof: proof,
               amount: user[0].split(' ')[1],
               loadingMessage: "",
             }
           }
+          return newState;
         })
-        setState(newState);
+        const resolved = Promise.all(promises);
+        setState(await resolved);
       }
     };
     getDistributor();
   }, [currentAccountAddress, web3.signer]);
-  console.log(state);
+
   const onClaim = async (index) => {
     let newState = [...state];
     newState[index] = {
       ...newState[index],
       loadingMessage: "Transferring token",
     }
-    setState(newState);
+    setState([...newState]);
 
     await getTokensByMerkleProof(
       web3.signer,
@@ -75,7 +81,7 @@ const Claim = () => {
       ...newState[index],
       loadingMessage: "",
     }
-    setState(newState);
+    setState([...newState]);
   };
   return (
     <div className={styles.container}>

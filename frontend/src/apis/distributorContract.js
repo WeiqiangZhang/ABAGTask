@@ -14,10 +14,7 @@ export const getTokensByMerkleProof = async (
     abi,
     signer
   );
-  console.log(signer,
-    proof,
-    recipientAddress,
-    amount);
+
   const proofData = proof.map(x => '0x' + x.data.toString('hex'));
   const positionData = proof.map(x => '0x' + SHA256(x.position).toString());
   const trx = await distributorContract.getTokensByMerkleProof(
